@@ -5,7 +5,7 @@ import matplotlib
 from layers import deconv, conv, dense, batch_norm
 from covers import covers
 import pickle
-from utils import *
+import scipy.misc
 
 matplotlib.rc('xtick', labelsize=10)
 
@@ -141,6 +141,18 @@ def plotgenerated(num, const_cat, const_con, const_rand):
     })
     save_images(img, [5, 5], './Images/test_%s.png' % num)
 
+def save_images(images, size, image_path):
+    images = images[0:size[0]*size[1], :, :, :]
+    images = (images+1.)/2.
+    height = images.shape[1]
+    width = images.shape[2]
+    img = np.zeros((height* size[0], width * size[1], 3))
+    for idx, im in enumerate(images):
+      i = idx % size[1]
+      j = idx // size[1]
+      img[j*height:j*height + height, i*width:i*width+width, :] = im
+    scipy.misc.imsave(image_path, img)
+
 def train_on_batch(batch, batch_cat):
     batch_con = np.random.uniform(-1, 1, size=[batch_size, con_dim]).astype(np.float32)
     batch_rand = np.random.uniform(-1, 1, size=[batch_size, rand_dim]).astype(np.float32)
@@ -202,7 +214,8 @@ for epoch in range(1, num_epochs):
         print ("Dis_err: %f  Gen_err: %f  Cat_err: %f" % (dis_err, gen_err, cat_err))
         if num_batches % 100 == 0 or num_batches==1:
             plot_loss()
-            plotgenerated(i, const_cat, const_con, const_rand)
+            plotgenerated(0, const_cat, const_con, const_rand)
+            sys.exit(0)
             pickle.dump(losses, open("losses.p", "wb"))
             saver.save(session, "C:/Users/Alex/Documents/PhD/deconv-softlabels/save/gan_batch%d.ckpt" % (num_batches))
         print("Epoch: %d  Batch: %d  image %d" % (epoch, num_batches, next_idx*num_batches))
